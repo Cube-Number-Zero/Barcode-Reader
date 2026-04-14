@@ -2,13 +2,13 @@ import cv2
 import numpy as np
 import math
 
-def find_barcode_directional(img, rotated=False):
+def find_barcode(img, rotated=False):
     assert img is not None, "file could not be found"
 
     # Resize image for consistency
-    original_y, original_x, _ = img.shape
-    scale = max(math.ceil(original_x / 1000), math.ceil(original_y / 1000))
-    image = cv2.resize(img, (original_x // scale, original_y // scale))
+    image_y, image_x, _ = img.shape
+    scale = max(math.ceil(image_x / 1000), math.ceil(image_y / 1000))
+    image = cv2.resize(img, (image_x // scale, image_y // scale))
 
     # Convert to grayscale
     filtered = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -47,19 +47,21 @@ def find_barcode_directional(img, rotated=False):
         filtered = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
 
     # Find contours of shape (not finished)
-    filtered = cv2.resize(filtered, (original_x, original_y))
     contours, _ = cv2.findContours(filtered, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     best_contour = max(contours, key=cv2.contourArea)
 
     # Display image
     x, y, w, h = cv2.boundingRect(best_contour)
     image = image[y:y+h, x:x+w]
-    return image
+    if rotated:
+        return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+    else:
+        return image
 
 
 if __name__ == "__main__":
-    image = cv2.imread("barcode cow.jpg")
-    image = find_barcode_directional(image, True)
+    image = cv2.imread("barcode can.jpg")
+    image = find_barcode(image, True)
     winname = "Barcode"
     cv2.namedWindow(winname)
     cv2.moveWindow(winname, 40,30)

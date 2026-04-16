@@ -30,6 +30,9 @@ def find_barcode(img, rotated=False):
     _, filtered = cv2.threshold(filtered, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     if rotated:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
+        filtered = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
+
         # Merge nearby areas into one shape
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 18))
         filtered = cv2.morphologyEx(filtered, cv2.MORPH_CLOSE, kernel)
@@ -38,6 +41,10 @@ def find_barcode(img, rotated=False):
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (30, 10))
         filtered = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
     else:
+        # 
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
+        filtered = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
+
         # Merge nearby areas into one shape
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (18, 8))
         filtered = cv2.morphologyEx(filtered, cv2.MORPH_CLOSE, kernel)
@@ -48,7 +55,10 @@ def find_barcode(img, rotated=False):
 
     # Find contours of shape (not finished)
     contours, _ = cv2.findContours(filtered, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-    best_contour = max(contours, key=cv2.contourArea)
+    try:
+        best_contour = max(contours, key=cv2.contourArea)
+    except ValueError:
+        raise ValueError("Barcode could not be found. Try rotating the image?")
 
     # Display image
     x, y, w, h = cv2.boundingRect(best_contour)

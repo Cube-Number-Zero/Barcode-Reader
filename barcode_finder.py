@@ -62,7 +62,23 @@ def find_barcode(img, rotated=False):
 
     # Display image
     x, y, w, h = cv2.boundingRect(best_contour)
-    image = image[y:y+h, x:x+w]
+    tolerance_x = 5
+    tolerance_y = 5
+    # ensuring tolerance doesnt make it try to go out of the bounds
+    # of the image, assigning each axis test case to a variable
+    oob_x = (x-tolerance_x < 0) or (x+w+tolerance_x > len(image[1]))
+    oob_y = (y-tolerance_y < 0) or (y+h+tolerance_y > len(image[0]))
+    if oob_x or oob_y:
+        # these individual cases allow one tolerance to still work
+        # if another one cannot
+        if oob_x and not oob_y:
+            image = image[y-tolerance_y:y+h+tolerance_y, x:x+w]
+        elif oob_y and not oob_x:
+            image = image[y:y+h, x-tolerance_x:x+w+tolerance_x]
+        else:
+            image = image[y:y+h, x:x+w]
+    else:
+        image = image[y-tolerance_y:y+h+tolerance_y, x-tolerance_x:x+w+tolerance_x]
     if rotated:
         return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     else:
